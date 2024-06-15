@@ -26,11 +26,11 @@ variable "existing_vpc_id" {
 
 resource "aws_instance" "web_servers" {
  availability_zone = "eu-central-1c"
- count = 1
+ count = 3
  ami = "ami-0faab6bdbac9486fb"
  vpc_security_group_ids = ["sg-058a6319422a1c348"]
  instance_type = "t3.micro"
- key_name = "eu_central_01"
+ key_name = "eu_central_key"
  subnet_id              = "subnet-021fc2ebc23791190"
  root_block_device {
     volume_type           = "gp3"
