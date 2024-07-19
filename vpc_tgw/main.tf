@@ -80,6 +80,22 @@ resource "aws_route_table_association" "private_subnet_association" {
   route_table_id = aws_route_table.priv_rt_stage01.id
 }
 
+resource "aws_route" "dev01_to_tgw" {
+  route_table_id            = aws_route_table.pub_rt_dev01.id
+  destination_cidr_block    = aws_vpc.vpc_stage01.cidr_block
+  transit_gateway_id        = aws_ec2_transit_gateway.tgw01.id
+}
+
+resource "aws_route" "stage01_to_tgw" {
+  route_table_id            = aws_route_table.priv_rt_stage01.id
+  destination_cidr_block    = aws_vpc.vpc_dev01.cidr_block
+  transit_gateway_id        = aws_ec2_transit_gateway.tgw01.id
+}
+
+
+
+
+
 #TGW
 
 resource "aws_ec2_transit_gateway" "tgw01" {
@@ -130,6 +146,9 @@ resource "aws_ec2_transit_gateway_route" "stage01_to_dev01" {
 
 
 
+
+
+
 #SG
 resource "aws_security_group" "sg_dev01" {
 name = "sg_dev01"
@@ -152,6 +171,12 @@ from_port = 443
 to_port = 443
 protocol = "tcp"
 cidr_blocks = ["0.0.0.0/0"]
+}
+ingress {
+from_port = 0
+to_port = 65535
+protocol = "tcp"
+cidr_blocks = ["${aws_vpc.vpc_stage01.cidr_block}"]
 }
 egress {
 from_port = 0
@@ -186,6 +211,13 @@ to_port = 443
 protocol = "tcp"
 cidr_blocks = ["0.0.0.0/0"]
 }
+ingress {
+from_port = 0
+to_port = 65535
+protocol = "tcp"
+cidr_blocks = ["${aws_vpc.vpc_dev01.cidr_block}"]
+}
+
 egress {
 from_port = 0
 to_port = 0
