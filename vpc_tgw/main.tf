@@ -257,7 +257,7 @@ instance_type = "t3.micro"
 key_name = "eu_central_key"
 vpc_security_group_ids = ["${aws_security_group.sg_stage01.id}"]
 subnet_id = aws_subnet.priv_sub_vpc_stage01.id
-associate_public_ip_address = true
+associate_public_ip_address = false
 user_data = <<-EOF
 #!/bin/bash
 apt -y update

@@ -46,8 +46,8 @@ resource "aws_instance" "web_server1" {
   yum -y update
   yum -y install httpd
   myip=`curl http://169.254.169.254/latest/meta-data/local-ipv4`
-  echo "<h2>WebServer with IP: $myip</h2><br>Build by Terraform with remote state! fuck the putin!"  >  /var/www/html/index.html
-  echo "<br><front color="blue">all world against the huilo" >> /var/www/html/index.html
+  echo "<h2>WebServer with IP: $myip</h2><br>Build by remote state!"  >  /var/www/html/index.html
+  echo "<br><front color="blue">test text" >> /var/www/html/index.html
   sudo service httpd start
   chkconfig httpd on
   EOF

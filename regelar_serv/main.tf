@@ -47,7 +47,7 @@ resource "aws_instance" "web_servers" {
 #!/bin/bash
 apt -y update
 apt -y install nginx
-echo "Putin huilo #${count.index +1}'"  >  /var/www/html/index.nginx-debian.html
+echo "Serv #${count.index +1}'"  >  /var/www/html/index.nginx-debian.html
 sudo systemctl restart nginx
 EOF
 

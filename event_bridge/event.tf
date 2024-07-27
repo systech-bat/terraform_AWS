@@ -61,27 +61,27 @@ resource "aws_volume_attachment" "ebs_att" {
   volume_id   = aws_ebs_volume.volume01[count.index].id
 }
 
-# SNS Topic
+# Topic
 resource "aws_sns_topic" "event_bridge" {
   name         = "event_bridge01"
   display_name = "event_bridge01"
 }
 
-# SNS Subscription
+# SNS Sub
 resource "aws_sns_topic_subscription" "email_subscription" {
   topic_arn = aws_sns_topic.event_bridge.arn
   protocol  = "email"
   endpoint  = "BazArutyunyan@gmail.com"
 }
 
-# EventBridge Rule
+# Rule
 resource "aws_cloudwatch_event_rule" "ec2_state" {
   name        = "ec2_state"
   description = "ec2 changing state notification"
   event_pattern = templatefile("${path.module}/event_pattern.json.tpl", {})
 }
 
-# EventBridge Target
+# Target
 resource "aws_cloudwatch_event_target" "send_to_sns" {
   rule      = aws_cloudwatch_event_rule.ec2_state.name
   target_id = "send-to-sns"
