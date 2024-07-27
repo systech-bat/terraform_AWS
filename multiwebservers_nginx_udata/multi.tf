@@ -30,7 +30,7 @@ resource "aws_instance" "web_servers" {
  ami = "ami-0faab6bdbac9486fb"
  vpc_security_group_ids = ["sg-058a6319422a1c348"]
  instance_type = "t3.micro"
- key_name = "eu_central_01"
+ key_name = "eu_central_key"
  subnet_id              = "subnet-021fc2ebc23791190"
  root_block_device {
     volume_type           = "gp3"
@@ -48,7 +48,7 @@ resource "aws_instance" "web_servers" {
 #!/bin/bash
 apt -y update
 apt -y install nginx
-echo "Putin huilo #${count.index +1}'"  >  /var/www/html/index.nginx-debian.html
+echo "Web #${count.index +1}'"  >  /var/www/html/index.nginx-debian.html
 sudo systemctl restart nginx
 EOF
 
