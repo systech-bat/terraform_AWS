@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-west-2"
 }
 
-resource "aws_instance" "Test_server" {
+resource "aws_instance" "Test_server01" {
   ami                    = "ami-095413544ce52437d"
   instance_type          = "t3.micro"
   vpc_security_group_ids = [aws_security_group.Test_server.id]
