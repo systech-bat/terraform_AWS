@@ -63,8 +63,8 @@ resource "aws_volume_attachment" "ebs_att" {
 
 # Topic
 resource "aws_sns_topic" "event_bridge" {
-  name         = "event_bridge01"
-  display_name = "event_bridge01"
+  name         = "event_bridge"
+  display_name = "event_bridge"
 }
 
 # SNS Sub
@@ -77,6 +77,7 @@ resource "aws_sns_topic_subscription" "email_subscription" {
 # Rule
 resource "aws_cloudwatch_event_rule" "ec2_state" {
   name        = "ec2_state"
+  event_bus_name = "default"
   description = "ec2 changing state notification"
   event_pattern = templatefile("${path.module}/event_pattern.json.tpl", {})
 }
