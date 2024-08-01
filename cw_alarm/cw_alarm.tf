@@ -78,7 +78,7 @@ resource "aws_sns_topic_subscription" "email_subscription" {
 
 # CW alarm
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm" {
-  alarm_name          = "HighCPUUtilizationAlarm"
+  alarm_name          = "CPU > 75%"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
