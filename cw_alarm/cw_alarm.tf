@@ -45,7 +45,8 @@ resource "aws_instance" "CW_alarm" {
 apt -y update
 apt -y install nginx
 echo "CW_alarm #${count.index + 1}" > /var/www/html/index.nginx-debian.html
-sudo systemctl restart nginx
+systemctl restart nginx
+apt install stress -y
 EOF
 
   tags = {
