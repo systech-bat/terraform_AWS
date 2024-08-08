@@ -30,6 +30,23 @@ resource "aws_s3_bucket" "bazcorp_s3" {
   }
 }
 
+resource "aws_s3_bucket_acl" "bazcorp_s3" {
+    bucket = aws_s3_bucket.bazcorp_s3.id
+    acl    = "public-read"
+    depends_on = [aws_s3_bucket_ownership_controls.s3_bucket_acl_ownership]
+}
+
+resource "aws_s3_bucket_ownership_controls" "s3_bucket_acl_ownership" {
+  bucket = aws_s3_bucket.bazcorp_s3.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+  depends_on = [aws_s3_bucket_public_access_block.bazcorp_s3_pub]
+}
+
+
+
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "sse" {
   bucket = aws_s3_bucket.bazcorp_s3.id
 
@@ -41,7 +58,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "sse" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "bazcorp_s3_pab" {
+resource "aws_s3_bucket_public_access_block" "bazcorp_s3_pub" {
   bucket = aws_s3_bucket.bazcorp_s3.id
 
   block_public_acls       = false
@@ -79,4 +96,3 @@ resource "aws_s3_bucket_policy" "public_policy" {
     }
     EOF
 }
-
