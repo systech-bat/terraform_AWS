@@ -26,3 +26,17 @@ resource "aws_backup_plan" "daily_backup_plan" {
     }
   }
 }
+
+resource "aws_backup_selection" "daily_backup_selection" {
+  name          = "Daily"
+  iam_role_arn  = "arn:aws:iam::562464429819:role/service-role/AWSBackupDefaultServiceRole"
+  plan_id       = aws_backup_plan.daily_backup_plan.id
+
+  resources = ["*"]
+
+   selection_tag {
+    type  = "STRINGEQUALS"
+    key   = "Backup"
+    value = "daily"
+  }
+}
