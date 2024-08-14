@@ -104,7 +104,7 @@ resource "aws_s3_bucket_policy" "public_policy" {
 }
 
 resource "aws_s3_bucket" "bazcorp_s3_cors_dest" {
-  provider = aws.northern  # reference the aliased provider
+  provider = aws.northern 
   bucket   = "bazcorp-s3-cors-02"
 
   versioning {
@@ -122,5 +122,87 @@ resource "aws_s3_bucket" "bazcorp_s3_cors_dest" {
   tags = {
     Name        = "bazcorp-s3-cors-02"
     Environment = "Dev"
+  }
+}
+
+
+resource "aws_iam_role" "replication_role" {
+  name = "s3_replication_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "s3.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+
+resource "aws_iam_role_policy" "replication_policy" {
+  role = aws_iam_role.replication_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetReplicationConfiguration",
+          "s3:ListBucket",
+          "s3:GetObjectVersion",
+          "s3:GetObjectVersionAcl",
+          "s3:GetObjectVersionTagging"
+        ]
+        Resource = [
+          "arn:aws:s3:::bazcorp-s3-cors-01",
+          "arn:aws:s3:::bazcorp-s3-cors-01/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ReplicateObject",
+          "s3:ReplicateDelete",
+          "s3:ReplicateTags"
+        ]
+        Resource = [
+          "arn:aws:s3:::bazcorp-s3-cors-02",
+          "arn:aws:s3:::bazcorp-s3-cors-02/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_s3_bucket_replication_configuration" "bazcorp_s3_replication" {
+  depends_on = [aws_s3_bucket.bazcorp_s3_cors, aws_s3_bucket.bazcorp_s3_cors_dest]
+
+  bucket = aws_s3_bucket.bazcorp_s3_cors.id
+
+
+  role = aws_iam_role.replication_role.arn
+
+  rule {
+    id     = "replicate-log-to-north-1"
+    status = "Enabled"
+
+    filter {
+      prefix = "log/"
+    }
+
+    destination {
+      bucket        = aws_s3_bucket.bazcorp_s3_cors_dest.arn
+      storage_class = "STANDARD"
+    }
+
+    delete_marker_replication {
+      status = "Enabled"
+    }
   }
 }
