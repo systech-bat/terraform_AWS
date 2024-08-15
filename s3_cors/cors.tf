@@ -1,4 +1,3 @@
-
 provider "aws" {
   region = "eu-central-1"
 }
@@ -8,7 +7,7 @@ provider "aws" {
   region = "eu-north-1"
 }
 
-
+#---------------------------------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "bazcorp_s3_cors" {
   bucket = "bazcorp-s3-cors-01"
@@ -42,17 +41,6 @@ resource "aws_s3_bucket" "bazcorp_s3_cors" {
     Name        = "bazcorp-s3-cors-01"
     Environment = "Dev"
   }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "sse" {
- bucket = aws_s3_bucket.bazcorp_s3_cors.id
-
-  rule {
-   apply_server_side_encryption_by_default {
-     sse_algorithm     = "aws:kms"
-      kms_master_key_id = "arn:aws:kms:eu-central-1:562464429819:key/65d8b5bc-4019-4e79-945f-ccc2745d5614"
-    }
- }
 }
 
 resource "aws_s3_bucket_public_access_block" "bazcorp_s3_pub" {
@@ -103,9 +91,11 @@ resource "aws_s3_bucket_policy" "public_policy" {
     EOF
 }
 
+#---------------------------------------------------------------------------------------------------
+
 resource "aws_s3_bucket" "bazcorp_s3_cors_dest" {
   provider = aws.northern 
-  bucket   = "bazcorp-s3-cors-02"
+  bucket   = "bazcorp-s3-cors-dest-01"
 
   versioning {
     enabled = true
@@ -120,89 +110,71 @@ resource "aws_s3_bucket" "bazcorp_s3_cors_dest" {
   }
 
   tags = {
-    Name        = "bazcorp-s3-cors-02"
+    Name        = "bazcorp-s3-cors-dest-01"
     Environment = "Dev"
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "bazcorp_s3_pub_dest" {
+  provider = aws.northern
+  bucket   = aws_s3_bucket.bazcorp_s3_cors_dest.id
 
-resource "aws_iam_role" "replication_role" {
-  name = "s3_replication_role"
+  block_public_acls       = false
+  ignore_public_acls      = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+}
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "s3.amazonaws.com"
+resource "aws_s3_bucket_policy" "public_policy_dest" {
+  provider = aws.northern
+  bucket   = aws_s3_bucket.bazcorp_s3_cors_dest.id
+
+  policy = <<-EOF
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "SourceIP",
+          "Effect": "Deny",
+          "Action": "s3:*",
+          "Resource": [
+            "arn:aws:s3:::bazcorp-s3-cors-dest-01",
+            "arn:aws:s3:::bazcorp-s3-cors-dest-01/*"
+          ],
+          "Condition": {
+            "NotIpAddress": {
+              "aws:SourceIp": [
+                "5.152.58.63"
+              ]
+            }
+          },
+          "Principal": "*"
+        },
+        {
+          "Sid": "PublicReadGetObject",
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion"
+        ],
+          "Resource": "arn:aws:s3:::bazcorp-s3-cors-dest-01/*"
         }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
+      ]
+    }
+    EOF
 }
 
+#---------------------------------------------------
 
-resource "aws_iam_role_policy" "replication_policy" {
-  role = aws_iam_role.replication_role.id
+resource "aws_s3_bucket_cors_configuration" "s3-cors" {
+  provider = aws.northern
+  bucket   = aws_s3_bucket.bazcorp_s3_cors_dest.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetReplicationConfiguration",
-          "s3:ListBucket",
-          "s3:GetObjectVersion",
-          "s3:GetObjectVersionAcl",
-          "s3:GetObjectVersionTagging"
-        ]
-        Resource = [
-          "arn:aws:s3:::bazcorp-s3-cors-01",
-          "arn:aws:s3:::bazcorp-s3-cors-01/*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:ReplicateObject",
-          "s3:ReplicateDelete",
-          "s3:ReplicateTags"
-        ]
-        Resource = [
-          "arn:aws:s3:::bazcorp-s3-cors-02",
-          "arn:aws:s3:::bazcorp-s3-cors-02/*"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_s3_bucket_replication_configuration" "bazcorp_s3_replication" {
-  depends_on = [aws_s3_bucket.bazcorp_s3_cors, aws_s3_bucket.bazcorp_s3_cors_dest]
-
-  bucket = aws_s3_bucket.bazcorp_s3_cors.id
-
-
-  role = aws_iam_role.replication_role.arn
-
-  rule {
-    id     = "replicate-log-to-north-1"
-    status = "Enabled"
-
-    filter {
-      prefix = "log/"
-    }
-
-    destination {
-      bucket        = aws_s3_bucket.bazcorp_s3_cors_dest.arn
-      storage_class = "STANDARD"
-    }
-
-    delete_marker_replication {
-      status = "Enabled"
-    }
+  cors_rule {
+    allowed_headers = ["Authorization"]
+    allowed_methods = ["GET"]
+    allowed_origins = ["http://bazcorp-s3-cors-01.s3-website-eu-central-1.amazonaws.com"]
+    max_age_seconds = 3000
   }
 }
