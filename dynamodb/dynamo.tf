@@ -16,6 +16,10 @@ resource "aws_dynamodb_table" "dynamo_table" {
  stream_enabled = true
  stream_view_type = "NEW_AND_OLD_IMAGES"
 
+  replica {
+    region_name = "eu-north-1"
+  }
+
   tags = {
     Name = "dynamo_table_01"
   }
