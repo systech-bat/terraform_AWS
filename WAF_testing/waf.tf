@@ -2,7 +2,7 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-# creating extra volumes
+
 resource "aws_ebs_volume" "volume01" {
   count = length(aws_instance.web_servers)
   availability_zone = element(
@@ -16,14 +16,14 @@ resource "aws_ebs_volume" "volume01" {
   }
 }
 
-# vpc choose
+
 variable "existing_vpc_id" {
   description = "choose vpc"
   type        = string
   default     = "vpc-008dfc71ba936018e"
 }
 
-# SG
+
 resource "aws_security_group" "waf_sg" {
   name        = "webserver security group"
   description = "sec_group1"
@@ -62,7 +62,7 @@ resource "aws_security_group" "waf_sg" {
   }
 }
 
-# instances
+
 resource "aws_instance" "web_servers" {
   count                 = 3
   ami                   = "ami-0faab6bdbac9486fb"
@@ -95,7 +95,7 @@ EOF
   }
 }
 
-# volumes mounting
+
 resource "aws_volume_attachment" "ebs_att" {
   count       = length(aws_instance.web_servers)
   device_name = "/dev/sdf"
@@ -103,7 +103,8 @@ resource "aws_volume_attachment" "ebs_att" {
   volume_id   = aws_ebs_volume.volume01[count.index].id
 }
 
-# TG
+#-----------------------------------------------------------------
+
 resource "aws_lb_target_group" "mywaftg01" {
   name        = "MyWAFTG01"
   port        = 80
@@ -135,7 +136,7 @@ resource "aws_lb_target_group_attachment" "tg_attachment" {
   port             = 80
 }
 
-# ALB
+
 resource "aws_lb" "WAF-ALB01" {
   name               = "WAF-ALB01"
   internal           = false
@@ -150,7 +151,7 @@ resource "aws_lb" "WAF-ALB01" {
   }
 }
 
-# Listener
+
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.WAF-ALB01.arn
   port              = 80
@@ -160,4 +161,66 @@ resource "aws_lb_listener" "http" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.mywaftg01.arn
   }
+}
+
+#---------------------------------------------------------------------
+
+
+resource "aws_wafv2_ip_set" "waf_ip_set" {
+  name        = "waf01-ip-set"
+  description = "IP set for WAF"
+  scope       = "REGIONAL"
+  ip_address_version = "IPV4"
+
+  addresses = ["5.152.58.63/32"]
+
+  tags = {
+    Name = "waf01-ip-set"
+  }
+}
+
+
+resource "aws_wafv2_web_acl" "acl_for_waf01" {
+  name        = "ACL01"
+  description = "test ACL rule - block by ip"
+  scope       = "REGIONAL"
+  default_action {
+    allow {}
+  }
+  rule {
+    name     = "rule01"
+    priority = 1
+
+    action {
+      block {}
+    }
+
+    statement {
+      ip_set_reference_statement {
+        arn = aws_wafv2_ip_set.waf_ip_set.arn
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "ACL01"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "ACL01"
+    sampled_requests_enabled   = true
+  }
+
+  tags = {
+    Name = "ACL01"
+  }
+}
+
+
+resource "aws_wafv2_web_acl_association" "waf_to_alb" {
+  resource_arn = aws_lb.WAF-ALB01.arn
+  web_acl_arn  = aws_wafv2_web_acl.acl_for_waf01.arn
 }
