@@ -240,32 +240,37 @@ Name = "sg_stage01"
 
 #NACL---------------------------------------------------
 
-resource "aws_network_acl" "nacl_dev01" {
-  vpc_id = aws_vpc.vpc_dev01.id
-
+resource "aws_default_network_acl" "default_nacl_dev01" {
+  default_network_acl_id = aws_vpc.vpc_dev01.default_network_acl_id
 
   ingress {
-    protocol   = "-1"
+    protocol   = -1
     rule_no    = 100
-    action     = "allow"
+    action = "allow"
     cidr_block = "5.152.58.63/32"
     from_port  = 0
     to_port    = 0
   }
 
-  egress {
-    protocol   = "-1"
-    rule_no    = 100
-    action     = "allow"
+  ingress {
+    protocol   = -1
+    rule_no    = 101
+    action = "deny"
     cidr_block = "0.0.0.0/0"
     from_port  = 0
     to_port    = 0
   }
 
-  tags = {
-    Name = "acl_dev01"
+  egress {
+    protocol   = -1
+    rule_no    = 100
+    action = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
   }
 }
+
 
 
 
