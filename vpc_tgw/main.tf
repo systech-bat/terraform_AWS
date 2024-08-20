@@ -4,7 +4,7 @@ provider "aws" {
 
 
 
-#vpc's
+#vpc's-----------------------------
 resource "aws_vpc" "vpc_dev01" {
 cidr_block = "10.0.0.0/24"
 enable_dns_support = true
@@ -24,10 +24,12 @@ Name = "vpc_stage01"
 }
 
 
-#sub's
+
+
+#sub's--------------------
 resource "aws_subnet" "pub_sub_vpc_dev01" {
 vpc_id = aws_vpc.vpc_dev01.id
-cidr_block = "10.0.0.0/25"
+cidr_block = "10.0.0.0/24"
 availability_zone = "eu-central-1a"
 tags = {
 Name = "Pub_sub1a"
@@ -36,14 +38,16 @@ Name = "Pub_sub1a"
 
 resource "aws_subnet" "priv_sub_vpc_stage01" {
 vpc_id = aws_vpc.vpc_stage01.id
-cidr_block = "20.0.0.0/25"
+cidr_block = "20.0.0.0/24"
 availability_zone = "eu-central-1b"
 tags = {
 Name = "Priv_sub1b"
 }
 }
 
-#IG
+
+
+#IG----------------------------
 resource "aws_internet_gateway" "ig_dev01" {
 vpc_id = aws_vpc.vpc_dev01.id
 tags = {
@@ -51,7 +55,9 @@ Name = "IG_dev0101"
 }
 }
 
-#RT
+
+
+#RT----------------------
 resource "aws_route_table" "pub_rt_dev01" {
 vpc_id = aws_vpc.vpc_dev01.id
 route {
@@ -96,7 +102,7 @@ resource "aws_route" "stage01_to_tgw" {
 
 
 
-#TGW
+#TGW-------------------------------------------------
 
 resource "aws_ec2_transit_gateway" "tgw01" {
   tags = {
@@ -149,7 +155,7 @@ resource "aws_ec2_transit_gateway_route" "stage01_to_dev01" {
 
 
 
-#SG
+#SG------------------------------------------------
 resource "aws_security_group" "sg_dev01" {
 name = "sg_dev01"
 description = "sg for dev01 env"
@@ -229,7 +235,41 @@ Name = "sg_stage01"
 }
 }
 
-#EC2
+
+
+
+#NACL---------------------------------------------------
+
+resource "aws_network_acl" "nacl_dev01" {
+  vpc_id = aws_vpc.vpc_dev01.id
+
+
+  ingress {
+    protocol   = "-1"
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "5.152.58.63/32"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  egress {
+    protocol   = "-1"
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = {
+    Name = "acl_dev01"
+  }
+}
+
+
+
+#EC2-------------------------------------------------------------------------
 
 resource "aws_instance" "instance01" {
 ami = "ami-0faab6bdbac9486fb"
