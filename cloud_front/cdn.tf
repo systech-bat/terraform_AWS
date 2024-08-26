@@ -87,10 +87,56 @@ resource "aws_s3_bucket_policy" "public_policy" {
     EOF
 }
 
-#copy-----------------------------------------
-
 resource "aws_s3_object" "image01" {
   bucket = aws_s3_bucket.bazcorp_s3.bucket
   key    = "6mb.jpg"
   source = "${path.module}/6mb.jpg"
+}
+
+
+#cdn--------------------------------------------------------------------------
+
+resource "aws_cloudfront_distribution" "bazcorp_cdn01" {
+  origin {
+    domain_name = "bazcorp-cf-01.s3.ap-south-1.amazonaws.com"
+    origin_id   = "S3-bazcorp-cf-01"
+
+    s3_origin_config {
+      origin_access_identity = ""
+    }
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "S3-bazcorp-cf-01"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+
+    compress = true
+
+    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized policy
+
+    # Remove the forwarded_values block
+  }
+
+  price_class = "PriceClass_All"
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  comment             = "CF bazcorp-cf-01"
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = {
+    Name        = "bazcorp-cf01"
+    Environment = "Dev"
+  }
 }
