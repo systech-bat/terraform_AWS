@@ -2,7 +2,7 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-# EC2 Instances and EBS Volumes
+#ec2-------------------------------------------------------------
 resource "aws_ebs_volume" "volume01" {
   availability_zone = "eu-central-1c"
   count             = length(aws_instance.r53_failover)
