@@ -56,23 +56,6 @@ resource "aws_s3_bucket_policy" "public_policy" {
       "Version": "2012-10-17",
       "Statement": [
         {
-          "Sid": "SourceIP",
-          "Effect": "Deny",
-          "Action": "s3:*",
-          "Resource": [
-            "arn:aws:s3:::bazcorp-cf-01",
-            "arn:aws:s3:::bazcorp-cf-01/*"
-          ],
-          "Condition": {
-            "NotIpAddress": {
-              "aws:SourceIp": [
-                "5.152.58.63"
-              ]
-            }
-          },
-          "Principal": "*"
-        },
-        {
           "Sid": "PublicReadGetObject",
           "Effect": "Allow",
           "Principal": "*",
@@ -91,6 +74,14 @@ resource "aws_s3_object" "image01" {
   bucket = aws_s3_bucket.bazcorp_s3.bucket
   key    = "6mb.jpg"
   source = "${path.module}/6mb.jpg"
+  depends_on = [aws_s3_bucket_public_access_block.bazcorp_s3_pub]
+}
+
+resource "aws_s3_object" "image02" {
+  bucket = aws_s3_bucket.bazcorp_s3.bucket
+  key    = "15mb.jpg"
+  source = "${path.module}/15mb.jpg"
+  depends_on = [aws_s3_bucket_public_access_block.bazcorp_s3_pub]
 }
 
 
@@ -114,9 +105,8 @@ resource "aws_cloudfront_distribution" "bazcorp_cdn01" {
 
     compress = true
 
-    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized policy
+    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6"
 
-    # Remove the forwarded_values block
   }
 
   price_class = "PriceClass_All"
