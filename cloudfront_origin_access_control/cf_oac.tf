@@ -133,3 +133,5 @@ resource "aws_cloudfront_distribution" "bazcorp_cdn01" {
     Environment = "Dev"
   }
 }
+
+
