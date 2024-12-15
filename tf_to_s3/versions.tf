@@ -1,4 +1,11 @@
 terraform {
+    backend "s3" {
+        profile     = "default"
+        bucket      = "bazcorp-s3-01"
+        encrypt     = true 
+        key         = "terraform-states/terraform.tfstate"
+        region      = "eu-central-1"
+    }
     required_providers {
         aws = {
             version = "~> 3.0"
